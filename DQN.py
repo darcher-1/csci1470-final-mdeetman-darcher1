@@ -20,8 +20,5 @@ class DQNModel(tf.keras.Model):
     def call(self, state):
         return self.network(state)
 
-    def loss(self, yj, Q):
-        return tf.square(yj - Q)
-
 
 

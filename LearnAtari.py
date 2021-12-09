@@ -5,12 +5,9 @@ import gym
 import numpy as np
 import tensorflow as tf
 from collections import deque
-from Preprocess import Preprocess
-from FrameBuffer import FrameBuffer
-from DQN import DQNModel
 
-
-EPSILON = 0.05
+EPSILON_MIN = 0.05
+EPSILON_DECAY = 0.999
 GAMMA = 0.99
 TARGET_UPDATE_STEPS = 5
 NUM_EPISODES = 600
@@ -26,6 +23,7 @@ class DQNAgent():
         self.target_model.set_weights(self.model.get_weights())
         self.target_model_counter = 0
         self.replay_memory = deque(maxlen=MAX_REPLAY_SIZE)
+        self.epsilon = 1.
         
 
     #TODO compile 4 previous frames
@@ -46,11 +44,12 @@ class DQNAgent():
         rewards = np.array([step[2] for step in minibatch])
         target_states = np.array([step[3] for step in minibatch])
         done_batch = np.array([step[4] for step in minibatch])
+        not_done_batch = 1 - done_batch
         with tf.GradientTape() as tape:
             prbs = self.model.call(states)
+            #prob corresponding to chosen acion calculated below
             prbs = tf.reduce_sum(tf.one_hot(actions, num_actions) * prbs, axis=1)
             target_prbs = tf.reduce_max(self.target_model.call(target_states), axis=-1)
-            not_done_batch = 1 - done_batch
             y = rewards + GAMMA * target_prbs * not_done_batch
             loss = tf.keras.losses.mean_squared_error(y, prbs)
         gradients = tape.gradient(loss, self.model.trainable_variables)
@@ -77,10 +76,13 @@ class DQNAgent():
 
     def predict(self, state):
         return self.model.call(state)
+
+    def decayEpsilon(self):
+        self.epsilon *= EPSILON_DECAY
     
 
 def main():
-    env = gym.make("Breakout-v0")
+    env = gym.make("BreakoutDeterministic-v4")
     env = Preprocess(env)
     env = FrameBuffer(env)
     agent = DQNAgent(env.action_space.n)
@@ -91,11 +93,12 @@ def main():
         total_reward = 0;
         while not done:
             action = env.action_space.sample()
-            if (random.uniform(0,1) > EPSILON and training):
+            if (random.uniform(0,1) > max(agent.epsilon, EPSILON_MIN)):
                 action = np.argmax(agent.predict(state.reshape(1,84,84,4)))
+            agent.decayEpsilon()
             new_state, reward, done, _ = env.step(action)
             total_reward += reward;
-            agent.update_replay_mem((state, action, reward, new_state, done))
+            agent.update_replay_mem((state, 0, reward, new_state, done))
             training = agent.train(done, env.action_space.n)
         print(i + 1,"episodes complete")
         print("total reward over last episode:", total_reward)
@@ -103,4 +106,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
