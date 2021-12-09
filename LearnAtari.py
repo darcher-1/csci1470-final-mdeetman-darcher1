@@ -19,13 +19,13 @@ NUM_EPISODES = 900
 MIN_REPLAY_SIZE = 1000
 MAX_REPLAY_SIZE = 50000
 MINIBATCH_SIZE = 64
-LOAD_WEIGHTS = False
+LOAD_WEIGHTS = True
 
 class DQNAgent():
     def __init__(self, num_actions):
         self.model = DQNModel(num_actions, (84,84,4))
         if (LOAD_WEIGHTS):
-            self.model.load_weights('weights')
+            self.model = tf.keras.models.load_model('breakout_model')
         self.target_model = DQNModel(num_actions, (84,84,4))
         self.target_model.set_weights(self.model.get_weights())
         self.target_model_counter = 0
@@ -57,7 +57,8 @@ class DQNAgent():
                 self.target_model.set_weights(self.model.get_weights())
                 self.target_model_counter = 0
                 print('target network updated')
-                self.model.save_weights('weights')
+                self.model.compute_output_shape(input_shape=(None, 84, 84, 4))
+                self.model.save('breakout_model')
         return True
 
     def update_replay_mem(self, step):
@@ -75,13 +76,14 @@ def play_without_train(env, agent):
         state = env.reset()
         total_reward = 0
         while not done:
-            action = np.argmax(agent.predict(state.reshape(1,84,84,4)))
-            print(action)
+            action = env.action_space.sample()
+            if (random.uniform(0,1) > EPSILON_MIN):
+                action = np.argmax(agent.predict(state.reshape(1,84,84,4)))
             state, _, done, _ = env.step(action)
             if len(sys.argv) > 1:
                 if sys.argv[1] == "RENDER":
                     env.render()
-        print("total reward over last episode:", total_reward, "with", steps, "steps")
+        print("total reward over last episode:", total_reward)
 
 def main():
     env = gym.make("BreakoutDeterministic-v4")
