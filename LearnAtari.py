@@ -8,14 +8,7 @@ from collections import deque
 from Preprocess import Preprocess
 from FrameBuffer import FrameBuffer
 from DQN import DQNModel
-
-##gpus = tf.config.experimental.list_physical_devices('GPU')
-##if gpus:
-##  try:
-##    tf.config.experimental.set_virtual_device_configuration(
-##        gpus[0],[tf.config.experimental.VirtualDeviceConfiguration(memory_limit=5120)])
-##  except RuntimeError as e:
-##    print(e)
+import matplotlib.pyplot as plt
 
 EPSILON_MIN = 0.05
 EPSILON_DECAY = 0.999
@@ -26,25 +19,18 @@ MIN_REPLAY_SIZE = 1000
 MAX_REPLAY_SIZE = 50000
 MINIBATCH_SIZE = 64
 RENDER_ENVIRONMENT = False
+LOAD_WEIGHTS = False
 
 class DQNAgent():
     def __init__(self, num_actions):
+        if (LOAD_WEIGHTS):
+            self.model.load_weights('weights')
         self.model = DQNModel(num_actions, (84,84,4))
         self.target_model = DQNModel(num_actions, (84,84,4))
         self.target_model.set_weights(self.model.get_weights())
         self.target_model_counter = 0
         self.replay_memory = deque(maxlen=MAX_REPLAY_SIZE)
         self.epsilon = 1.
-        
-
-    #TODO compile 4 previous frames
-##    def preprocess(self, img):
-##        img = cv2.resize(img, (84,110))
-##        img = img[26:110,:]
-##        img = cv2.resize(img, (84, 84))
-##        img = img.mean(-1, keepdims=True)
-##        img = img.astype('float32') / 255.
-##        return img
 
     def train(self, done, num_actions):
         if len(self.replay_memory) < MIN_REPLAY_SIZE:
@@ -65,15 +51,6 @@ class DQNAgent():
             loss = tf.keras.losses.mean_squared_error(y, prbs)
         gradients = tape.gradient(loss, self.model.trainable_variables)
         self.model.optimizer.apply_gradients(zip(gradients, self.model.trainable_variables))
-##        for index, (state, action, reward, new_state, done) in enumerate(minibatch):
-##            if done:
-##                yj = reward
-##            else:
-##                yj = reward + GAMMA * np.max(target_prbs[index])
-##            with tf.GradientTape() as tape:
-##                loss = model.loss(yj, prbs[index])
-##            gradients = tape.gradient(loss, self.model.trainable_variables)
-##            self.model.optimizer.apply_gradients(zip(gradients, model.trainable_variables))
         if (done):
             self.target_model_counter += 1
             if (self.target_model_counter >= TARGET_UPDATE_STEPS):
@@ -92,17 +69,31 @@ class DQNAgent():
     def decayEpsilon(self):
         self.epsilon *= EPSILON_DECAY
     
+def play_without_train(env, agent):
+    while True:
+        done = False
+        state = env.reset()
+        total_reward = 0
+        while not done:
+            action = np.argmax(agent.predict(state.reshape(1,84,84,4)))
+            state, _, done, _ = env.step(action)
+            if RENDER_ENVIRONMENT:
+                env.render()
+        print("total reward over last episode:", total_reward, "with", steps, "steps")
 
 def main():
     env = gym.make("BreakoutDeterministic-v4")
     env = Preprocess(env)
     env = FrameBuffer(env)
     agent = DQNAgent(env.action_space.n)
+    if LOAD_WEIGHTS:
+        play_without_train(env, agent)
+        return
     for i in range(NUM_EPISODES):
         steps = 1
         state = env.reset()
         done = False
-        total_reward = 0;
+        total_reward = 0
         while not done:
             action = env.action_space.sample()
             if (random.uniform(0,1) > max(agent.epsilon, EPSILON_MIN)):
@@ -116,7 +107,7 @@ def main():
             training = agent.train(done, env.action_space.n)
             if RENDER_ENVIRONMENT:
                 env.render()
-        print(i + 1,"episodes complete in")
+        print(i + 1,"episodes complete")
         print("total reward over last episode:", total_reward, "with", steps, "steps")
     
 
