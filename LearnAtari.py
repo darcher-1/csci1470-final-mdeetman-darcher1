@@ -80,6 +80,8 @@ class DQNAgent():
                 self.target_model.set_weights(self.model.get_weights())
                 self.target_model_counter = 0
                 print('target network updated')
+                self.model.save_weights("./weights")
+                
         return True
 
     def update_replay_mem(self, step):
