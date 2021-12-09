@@ -110,7 +110,6 @@ def main():
             if len(sys.argv) > 1:
                 if sys.argv[1] == "RENDER":
                     env.render()
-        print(i + 1,"episodes complete")
         print("total reward over episode " + str(i+1) + ":", total_reward, "with", steps, "steps.", "Epsilon is", round(max(agent.epsilon, EPSILON_MIN), 2))
     
 
