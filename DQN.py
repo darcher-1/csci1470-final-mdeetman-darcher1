@@ -11,7 +11,7 @@ class DQNModel(tf.keras.Model):
         super(DQNModel, self).__init__()
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
         self.network = tf.keras.Sequential()
-        self.network.add(tf.keras.layers.Conv2D(32, (8,8), strides=4, activation='relu', input_shape=state_shape))
+        self.network.add(tf.keras.layers.Conv2D(16, (8,8), strides=4, activation='relu', input_shape=state_shape))
         self.network.add(tf.keras.layers.Conv2D(32, (4,4), strides=2, activation='relu'))
         self.network.add(tf.keras.layers.Flatten())
         self.network.add(tf.keras.layers.Dense(256, activation='relu'))
