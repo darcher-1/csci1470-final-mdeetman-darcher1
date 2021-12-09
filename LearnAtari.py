@@ -10,6 +10,7 @@ from Preprocess import Preprocess
 from FrameBuffer import FrameBuffer
 from DQN import DQNModel
 import matplotlib.pyplot as plt
+import time
 
 EPSILON_MIN = 0.05
 EPSILON_DECAY = 0.999
@@ -79,10 +80,12 @@ def play_without_train(env, agent):
             action = env.action_space.sample()
             if (random.uniform(0,1) > EPSILON_MIN):
                 action = np.argmax(agent.predict(state.reshape(1,84,84,4)))
-            state, _, done, _ = env.step(action)
+            state, reward, done, _ = env.step(action)
+            total_reward += reward
             if len(sys.argv) > 1:
                 if sys.argv[1] == "RENDER":
                     env.render()
+                    time.sleep(0.03)
         print("total reward over last episode:", total_reward)
 
 def main():
@@ -106,6 +109,8 @@ def main():
             new_state, reward, done, _ = env.step(action)
             steps += 1
             total_reward += reward;
+            if (reward > 0):
+                reward = 1
             agent.update_replay_mem((state, action, reward, new_state, done))
             state = new_state
             training = agent.train(done, env.action_space.n)
