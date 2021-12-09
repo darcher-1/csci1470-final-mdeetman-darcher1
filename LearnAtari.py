@@ -109,7 +109,7 @@ def main():
             agent.decayEpsilon()
             new_state, reward, done, _ = env.step(action)
             total_reward += reward;
-            agent.update_replay_mem((state, 0, reward, new_state, done))
+            agent.update_replay_mem((state, action, reward, new_state, done))
             training = agent.train(done, env.action_space.n)
         print(i + 1,"episodes complete")
         print("total reward over last episode:", total_reward)
