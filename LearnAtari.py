@@ -5,6 +5,17 @@ import gym
 import numpy as np
 import tensorflow as tf
 from collections import deque
+from Preprocess import Preprocess
+from FrameBuffer import FrameBuffer
+from DQN import DQNModel
+
+##gpus = tf.config.experimental.list_physical_devices('GPU')
+##if gpus:
+##  try:
+##    tf.config.experimental.set_virtual_device_configuration(
+##        gpus[0],[tf.config.experimental.VirtualDeviceConfiguration(memory_limit=5120)])
+##  except RuntimeError as e:
+##    print(e)
 
 EPSILON_MIN = 0.05
 EPSILON_DECAY = 0.999
