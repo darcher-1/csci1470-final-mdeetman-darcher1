@@ -78,8 +78,9 @@ def play_without_train(env, agent):
             action = np.argmax(agent.predict(state.reshape(1,84,84,4)))
             print(action)
             state, _, done, _ = env.step(action)
-            if sys.argv[1] == "RENDER":
-                env.render()
+            if len(sys.argv) > 1:
+                if sys.argv[1] == "RENDER":
+                    env.render()
         print("total reward over last episode:", total_reward, "with", steps, "steps")
 
 def main():
@@ -106,10 +107,11 @@ def main():
             agent.update_replay_mem((state, action, reward, new_state, done))
             state = new_state
             training = agent.train(done, env.action_space.n)
-            if sys.argv[1] == "RENDER":
-                env.render()
+            if len(sys.argv) > 1:
+                if sys.argv[1] == "RENDER":
+                    env.render()
         print(i + 1,"episodes complete")
-        print("total reward over episode" + (i+1) + ":", total_reward, "with", steps, "steps.", "Epsilon is", max(agent.epsilon, EPSILON_MIN))
+        print("total reward over episode " + str(i+1) + ":", total_reward, "with", steps, "steps.", "Epsilon is", round(max(agent.epsilon, EPSILON_MIN), 2))
     
 
 if __name__ == '__main__':
