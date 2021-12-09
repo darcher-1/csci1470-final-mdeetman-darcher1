@@ -19,7 +19,7 @@ NUM_EPISODES = 900
 MIN_REPLAY_SIZE = 1000
 MAX_REPLAY_SIZE = 50000
 MINIBATCH_SIZE = 64
-LOAD_WEIGHTS = True
+LOAD_WEIGHTS = False
 
 class DQNAgent():
     def __init__(self, num_actions):
