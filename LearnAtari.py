@@ -21,11 +21,11 @@ EPSILON_MIN = 0.05
 EPSILON_DECAY = 0.999
 GAMMA = 0.99
 TARGET_UPDATE_STEPS = 5
-NUM_EPISODES = 600
+NUM_EPISODES = 900
 MIN_REPLAY_SIZE = 1000
 MAX_REPLAY_SIZE = 50000
 MINIBATCH_SIZE = 64
-EPISODES = 2000
+RENDER_ENVIRONMENT = False
 
 class DQNAgent():
     def __init__(self, num_actions):
@@ -80,8 +80,7 @@ class DQNAgent():
                 self.target_model.set_weights(self.model.get_weights())
                 self.target_model_counter = 0
                 print('target network updated')
-                self.model.save_weights("./weights")
-                
+                self.model.save_weights('weights')
         return True
 
     def update_replay_mem(self, step):
@@ -100,7 +99,7 @@ def main():
     env = FrameBuffer(env)
     agent = DQNAgent(env.action_space.n)
     for i in range(NUM_EPISODES):
-        training = False
+        steps = 1
         state = env.reset()
         done = False
         total_reward = 0;
@@ -110,11 +109,15 @@ def main():
                 action = np.argmax(agent.predict(state.reshape(1,84,84,4)))
             agent.decayEpsilon()
             new_state, reward, done, _ = env.step(action)
+            steps += 1
             total_reward += reward;
             agent.update_replay_mem((state, action, reward, new_state, done))
+            state = new_state
             training = agent.train(done, env.action_space.n)
-        print(i + 1,"episodes complete")
-        print("total reward over last episode:", total_reward)
+            if RENDER_ENVIRONMENT:
+                env.render()
+        print(i + 1,"episodes complete in")
+        print("total reward over last episode:", total_reward, "with", steps, "steps")
     
 
 if __name__ == '__main__':
