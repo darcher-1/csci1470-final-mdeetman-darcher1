@@ -1,4 +1,5 @@
 import os
+import sys
 import random
 import cv2
 import gym
@@ -18,14 +19,13 @@ NUM_EPISODES = 900
 MIN_REPLAY_SIZE = 1000
 MAX_REPLAY_SIZE = 50000
 MINIBATCH_SIZE = 64
-RENDER_ENVIRONMENT = False
 LOAD_WEIGHTS = False
 
 class DQNAgent():
     def __init__(self, num_actions):
+        self.model = DQNModel(num_actions, (84,84,4))
         if (LOAD_WEIGHTS):
             self.model.load_weights('weights')
-        self.model = DQNModel(num_actions, (84,84,4))
         self.target_model = DQNModel(num_actions, (84,84,4))
         self.target_model.set_weights(self.model.get_weights())
         self.target_model_counter = 0
@@ -76,8 +76,9 @@ def play_without_train(env, agent):
         total_reward = 0
         while not done:
             action = np.argmax(agent.predict(state.reshape(1,84,84,4)))
+            print(action)
             state, _, done, _ = env.step(action)
-            if RENDER_ENVIRONMENT:
+            if sys.argv[1] == "RENDER":
                 env.render()
         print("total reward over last episode:", total_reward, "with", steps, "steps")
 
@@ -105,10 +106,10 @@ def main():
             agent.update_replay_mem((state, action, reward, new_state, done))
             state = new_state
             training = agent.train(done, env.action_space.n)
-            if RENDER_ENVIRONMENT:
+            if sys.argv[1] == "RENDER":
                 env.render()
         print(i + 1,"episodes complete")
-        print("total reward over last episode:", total_reward, "with", steps, "steps")
+        print("total reward over episode" + (i+1) + ":", total_reward, "with", steps, "steps.", "Epsilon is", max(agent.epsilon, EPSILON_MIN))
     
 
 if __name__ == '__main__':
